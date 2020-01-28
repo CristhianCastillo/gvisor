@@ -43,6 +43,7 @@ go_library(
     deps = [
         "//pkg/log",
         "//pkg/sync",
+        "//pkg/syserror",
         "//pkg/waiter",
     ],
 )
