@@ -330,3 +330,12 @@ http_archive(
         "https://github.com/google/googletest/archive/565f1b848215b77c3732bca345fe76a0431d8b34.tar.gz",
     ],
 )
+
+# An image is built layered on top of this for the packetdrill tests.
+container_pull(
+    name = "ubuntu",
+    registry = "docker.io",
+    repository = "library/ubuntu",
+    # 'tag' is also supported, but digest is encouraged for reproducibility.
+    digest = "sha256:bc025862c3e8ec4a8754ea4756e33da6c41cba38330d7e324abd25c8e0b93300",
+)
