@@ -134,3 +134,40 @@ func IsValidUnicastEthernetAddress(addr tcpip.LinkAddress) bool {
 	// addr is a valid unicast ethernet address.
 	return true
 }
+
+// EthernetAddressFromMulticastIPAddress returns a multicast Ethernet address
+// for a multicast IP address.
+//
+// If addr is not a recognized multicast address, an empty address will be
+// returned.
+func EthernetAddressFromMulticastIPAddress(addr tcpip.Address) tcpip.LinkAddress {
+	var linkAddrBytes [EthernetAddressSize]byte
+	switch {
+	case IsV4MulticastAddress(addr):
+		// As per RFC 1112 section 6.4, the multicast Ethernet address for an IPv4
+		// packet with a multicast destination address (addr) has the following
+		// mapping:
+		//
+		//   0x01 : 0x00 : 0x5E : addr[1]&0x7F : addr[2] : addr[3]
+		linkAddrBytes[0] = 0x1
+		linkAddrBytes[2] = 0x5e
+		linkAddrBytes[3] = addr[1] & 0x7F
+		linkAddrBytes[4] = addr[2]
+		linkAddrBytes[5] = addr[3]
+
+	case IsV6MulticastAddress(addr):
+		// As per RFC 2464 section 7, the multicast Ethernet address for an IPv6
+		// packet with a multicast destination address (addr) has the following
+		// mapping:
+		//
+		//   0x33 : 0x33 : addr[12] : addr[13] : addr[14] : addr[15]
+		linkAddrBytes[0] = 0x33
+		linkAddrBytes[1] = 0x33
+		copy(linkAddrBytes[2:], addr[12:])
+
+	default:
+		return ""
+	}
+
+	return tcpip.LinkAddress(linkAddrBytes[:])
+}

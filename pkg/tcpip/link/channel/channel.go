@@ -27,9 +27,10 @@ import (
 
 // PacketInfo holds all the information about an outbound packet.
 type PacketInfo struct {
-	Pkt   tcpip.PacketBuffer
-	Proto tcpip.NetworkProtocolNumber
-	GSO   *stack.GSO
+	Pkt               tcpip.PacketBuffer
+	Proto             tcpip.NetworkProtocolNumber
+	GSO               *stack.GSO
+	RemoteLinkAddress tcpip.LinkAddress
 }
 
 // Endpoint is link layer endpoint that stores outbound packets in a channel
@@ -146,11 +147,12 @@ func (e *Endpoint) LinkAddress() tcpip.LinkAddress {
 }
 
 // WritePacket stores outbound packets into the channel.
-func (e *Endpoint) WritePacket(_ *stack.Route, gso *stack.GSO, protocol tcpip.NetworkProtocolNumber, pkt tcpip.PacketBuffer) *tcpip.Error {
+func (e *Endpoint) WritePacket(r *stack.Route, gso *stack.GSO, protocol tcpip.NetworkProtocolNumber, pkt tcpip.PacketBuffer) *tcpip.Error {
 	p := PacketInfo{
-		Pkt:   pkt,
-		Proto: protocol,
-		GSO:   gso,
+		Pkt:               pkt,
+		Proto:             protocol,
+		GSO:               gso,
+		RemoteLinkAddress: r.RemoteLinkAddress,
 	}
 
 	select {
@@ -162,7 +164,7 @@ func (e *Endpoint) WritePacket(_ *stack.Route, gso *stack.GSO, protocol tcpip.Ne
 }
 
 // WritePackets stores outbound packets into the channel.
-func (e *Endpoint) WritePackets(_ *stack.Route, gso *stack.GSO, pkts []tcpip.PacketBuffer, protocol tcpip.NetworkProtocolNumber) (int, *tcpip.Error) {
+func (e *Endpoint) WritePackets(r *stack.Route, gso *stack.GSO, pkts []tcpip.PacketBuffer, protocol tcpip.NetworkProtocolNumber) (int, *tcpip.Error) {
 	payloadView := pkts[0].Data.ToView()
 	n := 0
 packetLoop:
@@ -174,8 +176,9 @@ packetLoop:
 				Header: pkt.Header,
 				Data:   buffer.NewViewFromBytes(payloadView[off : off+size]).ToVectorisedView(),
 			},
-			Proto: protocol,
-			GSO:   gso,
+			Proto:             protocol,
+			GSO:               gso,
+			RemoteLinkAddress: r.RemoteLinkAddress,
 		}
 
 		select {

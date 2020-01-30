@@ -537,6 +537,7 @@ func (ndp *ndpState) sendDADPacket(addr tcpip.Address) *tcpip.Error {
 	ref := ndp.nic.getRefOrCreateTemp(header.IPv6ProtocolNumber, header.IPv6Any, NeverPrimaryEndpoint, forceSpoofing)
 	r := makeRoute(header.IPv6ProtocolNumber, header.IPv6Any, snmc, ndp.nic.linkEP.LinkAddress(), ref, false, false)
 	defer r.Release()
+	r.RemoteLinkAddress = header.EthernetAddressFromMulticastIPAddress(snmc)
 
 	hdr := buffer.NewPrependable(int(r.MaxHeaderLength()) + header.ICMPv6NeighborSolicitMinimumSize)
 	pkt := header.ICMPv6(hdr.Prepend(header.ICMPv6NeighborSolicitMinimumSize))
@@ -1196,6 +1197,7 @@ func (ndp *ndpState) startSolicitingRouters() {
 		ref := ndp.nic.getRefOrCreateTemp(header.IPv6ProtocolNumber, header.IPv6Any, NeverPrimaryEndpoint, forceSpoofing)
 		r := makeRoute(header.IPv6ProtocolNumber, header.IPv6Any, header.IPv6AllRoutersMulticastAddress, ndp.nic.linkEP.LinkAddress(), ref, false, false)
 		defer r.Release()
+		r.RemoteLinkAddress = header.EthernetAddressFromMulticastIPAddress(header.IPv6AllRoutersMulticastAddress)
 
 		payloadSize := header.ICMPv6HeaderSize + header.NDPRSMinimumSize
 		hdr := buffer.NewPrependable(header.IPv6MinimumSize + payloadSize)

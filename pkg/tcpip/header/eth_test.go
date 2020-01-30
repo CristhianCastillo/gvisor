@@ -66,3 +66,55 @@ func TestIsValidUnicastEthernetAddress(t *testing.T) {
 		})
 	}
 }
+
+func TestEthernetAddressFromMulticastIPAddress(t *testing.T) {
+	tests := []struct {
+		name             string
+		addr             tcpip.Address
+		expectedLinkAddr tcpip.LinkAddress
+	}{
+		{
+			name:             "IPv4 Multicast without 24th bit set",
+			addr:             "\xe0\x7e\xdc\xba",
+			expectedLinkAddr: "\x01\x00\x5e\x7e\xdc\xba",
+		},
+		{
+			name:             "IPv4 Multicast with 24th bit set",
+			addr:             "\xe0\xfe\xdc\xba",
+			expectedLinkAddr: "\x01\x00\x5e\x7e\xdc\xba",
+		},
+		{
+			name:             "IPv4 Non-Multicast",
+			addr:             "\xd0\xfe\xdc\xba",
+			expectedLinkAddr: "",
+		},
+		{
+			name:             "IPv6 Multicast",
+			addr:             "\xff\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x1a",
+			expectedLinkAddr: "\x33\x33\x0d\x0e\x0f\x1a",
+		},
+		{
+			name:             "IPv6 Non-Multicast",
+			addr:             "\xfe\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x1a",
+			expectedLinkAddr: "",
+		},
+		{
+			name:             "Non IPv4 or IPv6",
+			addr:             "\x01\x02\x03",
+			expectedLinkAddr: "",
+		},
+		{
+			name:             "Empty",
+			addr:             "",
+			expectedLinkAddr: "",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := EthernetAddressFromMulticastIPAddress(test.addr); got != test.expectedLinkAddr {
+				t.Fatalf("got EthernetAddressFromMulticastIPAddress(%s) = %s, want = %s", got, test.expectedLinkAddr)
+			}
+		})
+	}
+}
