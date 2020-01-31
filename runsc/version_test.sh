@@ -16,7 +16,7 @@
 
 set -euf -x -o pipefail
 
-readonly runsc="$1"
+readonly runsc="$(find -L "$TEST_SRCDIR" -name runsc -type f)"
 readonly version=$($runsc --version)
 
 # Version should should not match VERSION, which is the default and which will
